@@ -1,3 +1,5 @@
+using NetTopologySuite.Geometries;
+
 namespace Data;
 
 public sealed class UfRecord
@@ -183,6 +185,15 @@ public sealed class DadoInfraestruturaRecord
     public string UfSigla { get; set; } = string.Empty;
     public string TipoInfraestrutura { get; set; } = string.Empty;
     public int DomiciliosAtendidos { get; set; }
+}
+
+public sealed class SetorCensitarioRecord
+{
+    public string CodigoSetor { get; set; } = string.Empty;
+    public int MunicipioCodigoIbge { get; set; }
+    public string MunicipioNome { get; set; } = string.Empty;
+    public string UfSigla { get; set; } = string.Empty;
+    public MultiPolygon Geometria { get; set; } = default!;
 }
 
 public sealed class TrimestreRecord

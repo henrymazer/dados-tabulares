@@ -7,5 +7,6 @@ public enum IbgeDataset
     Renda,
     Saneamento,
     Urbanizacao,
-    Infraestrutura
+    Infraestrutura,
+    SetoresCensitarios
 }

@@ -3,6 +3,7 @@ using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -21,6 +22,7 @@ namespace Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
 
             modelBuilder.Entity("Data.AnoEleicaoRecord", b =>
                 {
@@ -381,6 +383,41 @@ namespace Data.Migrations
                     b.HasIndex("UfSigla");
 
                     b.ToTable("dados_saneamento", "ibge");
+                });
+
+            modelBuilder.Entity("Data.SetorCensitarioRecord", b =>
+                {
+                    b.Property<string>("CodigoSetor")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<MultiPolygon>("Geometria")
+                        .IsRequired()
+                        .HasColumnType("geometry(MultiPolygon,4674)");
+
+                    b.Property<int>("MunicipioCodigoIbge")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MunicipioNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UfSigla")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.HasKey("CodigoSetor");
+
+                    b.HasIndex("Geometria")
+                        .HasMethod("gist");
+
+                    b.HasIndex("MunicipioCodigoIbge");
+
+                    b.HasIndex("UfSigla");
+
+                    b.ToTable("setores_censitarios", "ibge");
                 });
 
             modelBuilder.Entity("Data.DadoUrbanizacaoRecord", b =>

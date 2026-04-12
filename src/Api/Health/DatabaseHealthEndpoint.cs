@@ -17,9 +17,16 @@ public static class DatabaseHealthEndpoint
         PublicDataDbContext dbContext,
         CancellationToken ct)
     {
-        if (await dbContext.Database.CanConnectAsync(ct))
+        try
         {
-            return TypedResults.Ok(new HealthResponse("healthy"));
+            if (await dbContext.Database.CanConnectAsync(ct))
+            {
+                return TypedResults.Ok(new HealthResponse("healthy"));
+            }
+        }
+        catch (Exception)
+        {
+            // Any connectivity exception is mapped to the same unhealthy response.
         }
 
         return TypedResults.Json(new HealthResponse("unhealthy"), statusCode: StatusCodes.Status503ServiceUnavailable);

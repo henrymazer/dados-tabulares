@@ -32,6 +32,20 @@ public sealed class EtlCommandParserTests
     }
 
     [Fact]
+    public void Parse_ComDatasetEspacialIbge_ResolveArquivo()
+    {
+        var command = EtlCommandParser.Parse([
+            "--source", "ibge",
+            "--dataset", "setores-censitarios",
+            "--file", "/tmp/setores.geojson"
+        ]);
+
+        Assert.Equal(EtlSourceKind.Ibge, command.Kind);
+        Assert.Equal("setores-censitarios", command.Source);
+        Assert.Equal("/tmp/setores.geojson", command.FilePath);
+    }
+
+    [Fact]
     public void Parse_ComSourceAgrupadoPnad_ExigeDataset()
     {
         var command = EtlCommandParser.Parse([

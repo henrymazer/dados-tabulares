@@ -86,7 +86,8 @@ public sealed class ConfigurableDatabaseWebApplicationFactory(string readOnlyCon
         {
             services.RemoveAll<DbContextOptions<Data.PublicDataDbContext>>();
             services.RemoveAll<Data.PublicDataDbContext>();
-            services.AddDbContext<Data.PublicDataDbContext>(options => options.UseNpgsql(readOnlyConnectionString));
+            services.AddDbContext<Data.PublicDataDbContext>(options =>
+                options.UseNpgsql(readOnlyConnectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite()));
         });
     }
 }

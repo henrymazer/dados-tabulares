@@ -8,7 +8,7 @@ namespace Etl.Tests.Pnad;
 
 public sealed class PnadIngestionPipelineIntegrationTests : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgis/postgis:17-3.5")
         .WithDatabase("dados_publicos")
         .WithUsername("postgres")
         .WithPassword("postgres")
@@ -93,7 +93,7 @@ public sealed class PnadIngestionPipelineIntegrationTests : IAsyncLifetime
     private PublicDataDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PublicDataDbContext>()
-            .UseNpgsql(_postgres.GetConnectionString())
+            .UseNpgsql(_postgres.GetConnectionString(), options => options.UseNetTopologySuite())
             .Options;
 
         return new PublicDataDbContext(options);

@@ -15,9 +15,10 @@ public static class PublicDataServiceCollectionExtensions
     private static IServiceCollection AddPublicDataDbContext(this IServiceCollection services, IConfiguration configuration, string connectionStringName)
     {
         var connectionString = configuration.GetConnectionString(connectionStringName)
-            ?? throw new InvalidOperationException($"Connection string '{connectionStringName}' não foi configurada.");
+            ?? throw new InvalidOperationException($"Connection string '{connectionStringName}' is not configured.");
 
-        services.AddDbContext<PublicDataDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<PublicDataDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite()));
         return services;
     }
 }

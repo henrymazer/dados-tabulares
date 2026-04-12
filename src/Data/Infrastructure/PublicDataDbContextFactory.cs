@@ -7,8 +7,17 @@ public sealed class PublicDataDbContextFactory : IDesignTimeDbContextFactory<Pub
 {
     public PublicDataDbContext CreateDbContext(string[] args)
     {
+        const string connectionStringEnvironmentVariable = "ConnectionStrings__ReadWrite";
+
+        var connectionString = Environment.GetEnvironmentVariable(connectionStringEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                $"Set '{connectionStringEnvironmentVariable}' before running design-time EF commands.");
+        }
+
         var builder = new DbContextOptionsBuilder<PublicDataDbContext>();
-        builder.UseNpgsql("Host=localhost;Port=5432;Database=dados_publicos;Username=postgres;Password=postgres");
+        builder.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseNetTopologySuite());
         return new PublicDataDbContext(builder.Options);
     }
 }

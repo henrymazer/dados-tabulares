@@ -10,7 +10,7 @@ namespace Etl.Tests.Tse;
 
 public sealed class TseIngestionIntegrationTests : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:17-alpine")
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgis/postgis:17-3.5")
         .WithDatabase("dados_publicos")
         .WithUsername("postgres")
         .WithPassword("postgres")
@@ -89,7 +89,7 @@ public sealed class TseIngestionIntegrationTests : IAsyncLifetime
     private PublicDataDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PublicDataDbContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .UseNpgsql(_postgresContainer.GetConnectionString(), options => options.UseNetTopologySuite())
             .Options;
 
         return new PublicDataDbContext(options);

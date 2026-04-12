@@ -63,6 +63,7 @@ Desktop.ini
 *.gz
 *.tar
 *.7z
+*.gpkg
 data/raw/
 data/temp/
 

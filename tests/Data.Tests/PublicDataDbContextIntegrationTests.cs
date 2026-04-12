@@ -7,6 +7,8 @@ using DadosTabulares.Domain.Pnad;
 using DadosTabulares.Domain.Tse;
 using DotNet.Testcontainers.Builders;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -14,7 +16,7 @@ namespace Data.Tests;
 
 public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:17-alpine")
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgis/postgis:17-3.5")
         .WithDatabase("dados_publicos")
         .WithUsername("postgres")
         .WithPassword("postgres")
@@ -59,6 +61,40 @@ public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
         Assert.Contains("ibge", existingSchemas);
         Assert.Contains("tse", existingSchemas);
         Assert.Contains("pnad", existingSchemas);
+    }
+
+    [Fact]
+    public async Task SpatialModel_PersistsSetorCensitarioGeometry()
+    {
+        await using var context = CreateContext();
+        await context.Database.MigrateAsync();
+
+        var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4674);
+        var polygon = geometryFactory.CreatePolygon(
+        [
+            new Coordinate(-46.6400, -23.5500),
+            new Coordinate(-46.6390, -23.5500),
+            new Coordinate(-46.6390, -23.5490),
+            new Coordinate(-46.6400, -23.5490),
+            new Coordinate(-46.6400, -23.5500)
+        ]);
+
+        context.SetoresCensitarios.Add(new SetorCensitarioRecord
+        {
+            CodigoSetor = "355030800000001",
+            MunicipioCodigoIbge = 3550308,
+            MunicipioNome = "Sao Paulo",
+            UfSigla = "SP",
+            Geometria = geometryFactory.CreateMultiPolygon([polygon])
+        });
+
+        await context.SaveChangesAsync();
+
+        var persisted = await context.SetoresCensitarios.SingleAsync(x => x.CodigoSetor == "355030800000001");
+
+        Assert.Equal(4674, persisted.Geometria.SRID);
+        Assert.Equal("MultiPolygon", persisted.Geometria.GeometryType);
+        Assert.True(persisted.Geometria.Area > 0);
     }
 
     [Fact]
@@ -180,7 +216,7 @@ public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
     private PublicDataDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PublicDataDbContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .UseNpgsql(_postgresContainer.GetConnectionString(), options => options.UseNetTopologySuite())
             .Options;
 
         return new PublicDataDbContext(options);

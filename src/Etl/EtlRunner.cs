@@ -33,9 +33,16 @@ public sealed class EtlRunner(PublicDataDbContext context)
     private async Task<int> RunIbgeAsync(EtlCommand command, CancellationToken ct)
     {
         await using var stream = File.OpenRead(command.FilePath);
-        var pipeline = new IbgeIngestionPipeline(context);
+        var dataset = ParseIbgeDataset(command.Source);
 
-        return await pipeline.IngerirAsync(ParseIbgeDataset(command.Source), stream, ct);
+        if (dataset == IbgeDataset.SetoresCensitarios)
+        {
+            var spatialPipeline = new IbgeSpatialIngestionPipeline(context);
+            return await spatialPipeline.IngerirSetoresCensitariosAsync(stream, ct);
+        }
+
+        var pipeline = new IbgeIngestionPipeline(context);
+        return await pipeline.IngerirAsync(dataset, stream, ct);
     }
 
     private async Task<int> RunPnadAsync(EtlCommand command, CancellationToken ct)

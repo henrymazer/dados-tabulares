@@ -1,3 +1,4 @@
+using NetTopologySuite.Geometries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data;
@@ -22,6 +23,7 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
     public DbSet<DadoSaneamentoRecord> DadosSaneamento => Set<DadoSaneamentoRecord>();
     public DbSet<DadoUrbanizacaoRecord> DadosUrbanizacao => Set<DadoUrbanizacaoRecord>();
     public DbSet<DadoInfraestruturaRecord> DadosInfraestrutura => Set<DadoInfraestruturaRecord>();
+    public DbSet<SetorCensitarioRecord> SetoresCensitarios => Set<SetorCensitarioRecord>();
     public DbSet<TrimestreRecord> Trimestres => Set<TrimestreRecord>();
     public DbSet<DadoDesempregoRecord> DadosDesemprego => Set<DadoDesempregoRecord>();
     public DbSet<DadoInformalidadeRecord> DadosInformalidade => Set<DadoInformalidadeRecord>();
@@ -230,6 +232,21 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
             entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
             entity.Property(x => x.TipoInfraestrutura).HasMaxLength(100).IsRequired();
             entity.HasIndex(x => x.UfSigla);
+        });
+
+        modelBuilder.Entity<SetorCensitarioRecord>(entity =>
+        {
+            entity.ToTable("setores_censitarios", "ibge");
+            entity.HasKey(x => x.CodigoSetor);
+            entity.Property(x => x.CodigoSetor).HasMaxLength(15).IsRequired();
+            entity.Property(x => x.MunicipioNome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
+            entity.Property(x => x.Geometria)
+                .HasColumnType("geometry(MultiPolygon,4674)")
+                .IsRequired();
+            entity.HasIndex(x => x.MunicipioCodigoIbge);
+            entity.HasIndex(x => x.UfSigla);
+            entity.HasIndex(x => x.Geometria).HasMethod("gist");
         });
     }
 

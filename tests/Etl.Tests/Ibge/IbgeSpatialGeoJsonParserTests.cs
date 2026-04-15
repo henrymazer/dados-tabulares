@@ -42,7 +42,7 @@ public sealed class IbgeSpatialGeoJsonParserTests
         Assert.IsType<MultiPolygon>(setor.Geometria);
         Assert.Equal(4674, setor.Geometria.SRID);
         Assert.Equal("355030800000001", setor.CodigoSetor);
-        Assert.Equal(3550308, setor.MunicipioCodigoIbge);
+        Assert.Equal("3550308", setor.MunicipioCodigoIbge);
         Assert.Equal("Sao Paulo", setor.MunicipioNome);
         Assert.Equal("SP", setor.UfSigla);
     }

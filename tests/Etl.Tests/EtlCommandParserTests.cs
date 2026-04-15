@@ -46,6 +46,33 @@ public sealed class EtlCommandParserTests
     }
 
     [Fact]
+    public void Parse_ComMalhaMunicipalIbge_ResolveArquivo()
+    {
+        var command = EtlCommandParser.Parse([
+            "--source", "ibge",
+            "--dataset", "malha-municipal",
+            "--file", "/tmp/municipios_2025.gpkg"
+        ]);
+
+        Assert.Equal(EtlSourceKind.Ibge, command.Kind);
+        Assert.Equal("malha-municipal", command.Source);
+        Assert.Equal("/tmp/municipios_2025.gpkg", command.FilePath);
+    }
+
+    [Fact]
+    public void Parse_ComAgregadosStagingIbge_UsaNomeDoArquivoComoDatasetDoSnapshot()
+    {
+        var command = EtlCommandParser.Parse([
+            "--source", "ibge",
+            "--dataset", "agregados-staging",
+            "--file", "/tmp/Agregados_por_setores_basico_BR_20250417.zip"
+        ]);
+
+        Assert.Equal("agregados-staging", command.Source);
+        Assert.Equal("agregados_por_setores_basico_br_20250417", command.Dataset);
+    }
+
+    [Fact]
     public void Parse_ComSourceAgrupadoPnad_ExigeDataset()
     {
         var command = EtlCommandParser.Parse([
@@ -68,5 +95,21 @@ public sealed class EtlCommandParserTests
         ]));
 
         Assert.Contains("--year", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_ComLocaisBrutosTse_UsaNomeDoArquivoComoDatasetDoSnapshot()
+    {
+        var command = EtlCommandParser.Parse([
+            "--source", "tse",
+            "--dataset", "locais-brutos",
+            "--file", "/tmp/detalhe_votacao_secao_2024.zip",
+            "--year", "2024"
+        ]);
+
+        Assert.Equal(EtlSourceKind.Tse, command.Kind);
+        Assert.Equal("locais-brutos", command.Source);
+        Assert.Equal("detalhe_votacao_secao_2024", command.Dataset);
+        Assert.Equal(2024, command.Year);
     }
 }

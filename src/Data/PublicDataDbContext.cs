@@ -23,7 +23,14 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
     public DbSet<DadoSaneamentoRecord> DadosSaneamento => Set<DadoSaneamentoRecord>();
     public DbSet<DadoUrbanizacaoRecord> DadosUrbanizacao => Set<DadoUrbanizacaoRecord>();
     public DbSet<DadoInfraestruturaRecord> DadosInfraestrutura => Set<DadoInfraestruturaRecord>();
+    public DbSet<CargaBrutaSnapshotRecord> CargasBrutasSnapshots => Set<CargaBrutaSnapshotRecord>();
+    public DbSet<CargaBrutaAuditoriaRecord> CargasBrutasAuditorias => Set<CargaBrutaAuditoriaRecord>();
     public DbSet<SetorCensitarioRecord> SetoresCensitarios => Set<SetorCensitarioRecord>();
+    public DbSet<MunicipioMalhaRecord> MunicipiosMalha => Set<MunicipioMalhaRecord>();
+    public DbSet<IbgeCatalogoVariavelRecord> IbgeCatalogoVariaveis => Set<IbgeCatalogoVariavelRecord>();
+    public DbSet<IbgeCatalogoCategoriaRecord> IbgeCatalogoCategorias => Set<IbgeCatalogoCategoriaRecord>();
+    public DbSet<IbgeAgregadoStagingRecord> IbgeAgregadosStaging => Set<IbgeAgregadoStagingRecord>();
+    public DbSet<TseLocalVotacaoBrutoStagingRecord> TseLocaisVotacaoBrutos => Set<TseLocalVotacaoBrutoStagingRecord>();
     public DbSet<TrimestreRecord> Trimestres => Set<TrimestreRecord>();
     public DbSet<DadoDesempregoRecord> DadosDesemprego => Set<DadoDesempregoRecord>();
     public DbSet<DadoInformalidadeRecord> DadosInformalidade => Set<DadoInformalidadeRecord>();
@@ -34,6 +41,7 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
         ConfigureTse(modelBuilder);
         ConfigureIbge(modelBuilder);
         ConfigurePnad(modelBuilder);
+        ConfigureEtl(modelBuilder);
     }
 
     private static void ConfigureTse(ModelBuilder modelBuilder)
@@ -239,7 +247,33 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
             entity.ToTable("setores_censitarios", "ibge");
             entity.HasKey(x => x.CodigoSetor);
             entity.Property(x => x.CodigoSetor).HasMaxLength(15).IsRequired();
+            entity.Property(x => x.Situacao).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.CodigoSituacao).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.CodigoTipo).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.CodigoRegiao).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeRegiao).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.CodigoUf).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeUf).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.MunicipioCodigoIbge).HasMaxLength(7).IsRequired();
             entity.Property(x => x.MunicipioNome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CodigoDistrito).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeDistrito).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoSubdistrito).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeSubdistrito).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoBairro).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeBairro).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoNucleoUrbano).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeNucleoUrbano).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoFcu).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeFcu).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoAglomerado).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeAglomerado).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoRegiaoIntermediaria).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeRegiaoIntermediaria).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoRegiaoImediata).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeRegiaoImediata).HasMaxLength(254).IsRequired();
+            entity.Property(x => x.CodigoConcentracaoUrbana).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeConcentracaoUrbana).HasMaxLength(254).IsRequired();
             entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
             entity.Property(x => x.Geometria)
                 .HasColumnType("geometry(MultiPolygon,4674)")
@@ -247,6 +281,58 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
             entity.HasIndex(x => x.MunicipioCodigoIbge);
             entity.HasIndex(x => x.UfSigla);
             entity.HasIndex(x => x.Geometria).HasMethod("gist");
+        });
+
+        modelBuilder.Entity<MunicipioMalhaRecord>(entity =>
+        {
+            entity.ToTable("malha_municipal", "ibge");
+            entity.HasKey(x => x.CodigoMunicipio);
+            entity.Property(x => x.CodigoMunicipio).HasMaxLength(7).IsRequired();
+            entity.Property(x => x.NomeMunicipio).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.CodigoRegiaoImediata).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeRegiaoImediata).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.CodigoRegiaoIntermediaria).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeRegiaoIntermediaria).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.CodigoUf).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeUf).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
+            entity.Property(x => x.CodigoRegiao).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.NomeRegiao).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.SiglaRegiao).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.CodigoConcentracaoUrbana).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.NomeConcentracaoUrbana).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Geometria)
+                .HasColumnType("geometry(MultiPolygon,4674)")
+                .IsRequired();
+            entity.HasIndex(x => x.UfSigla);
+            entity.HasIndex(x => x.Geometria).HasMethod("gist");
+        });
+
+        modelBuilder.Entity<IbgeCatalogoVariavelRecord>(entity =>
+        {
+            entity.ToTable("catalogo_variaveis", "ibge");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.FonteDicionario).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.Pacote).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Tipo).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Tema).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Variavel).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Descricao).HasMaxLength(2048).IsRequired();
+            entity.HasIndex(x => new { x.Pacote, x.Variavel }).IsUnique();
+        });
+
+        modelBuilder.Entity<IbgeCatalogoCategoriaRecord>(entity =>
+        {
+            entity.ToTable("catalogo_categorias", "ibge");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.FonteDicionario).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.Pacote).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Variavel).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Categoria).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Descricao).HasMaxLength(2048).IsRequired();
+            entity.HasIndex(x => new { x.Pacote, x.Variavel });
         });
     }
 
@@ -283,6 +369,69 @@ public sealed class PublicDataDbContext(DbContextOptions<PublicDataDbContext> op
             entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
             entity.Property(x => x.RendaMedia).HasPrecision(18, 2);
             entity.HasIndex(x => new { x.TrimestreAno, x.TrimestreNumero });
+        });
+    }
+
+    private static void ConfigureEtl(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<CargaBrutaSnapshotRecord>(entity =>
+        {
+            entity.ToTable("cargas_brutas_snapshots", "etl");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.Fonte).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Dataset).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Escopo).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.ChaveSnapshot).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.HashSnapshot).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.NomeArquivoOriginal).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.CaminhoArquivoOriginal).HasMaxLength(1024).IsRequired();
+            entity.HasIndex(x => new { x.Fonte, x.Dataset, x.Escopo, x.IsCurrent });
+            entity.HasIndex(x => new { x.Fonte, x.Dataset, x.Escopo, x.HashSnapshot });
+        });
+
+        modelBuilder.Entity<CargaBrutaAuditoriaRecord>(entity =>
+        {
+            entity.ToTable("cargas_brutas_auditorias", "etl");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.Fonte).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Dataset).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Escopo).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.ChaveSnapshot).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.HashSnapshot).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.NomeArquivoOriginal).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.CaminhoArquivoOriginal).HasMaxLength(1024).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => x.SnapshotId);
+        });
+
+        modelBuilder.Entity<IbgeAgregadoStagingRecord>(entity =>
+        {
+            entity.ToTable("ibge_agregados_staging", "etl");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.Pacote).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.NomeArquivoInterno).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.CodigoSetor).HasMaxLength(15).IsRequired();
+            entity.Property(x => x.PayloadJson).HasColumnType("jsonb").IsRequired();
+            entity.HasIndex(x => new { x.Pacote, x.CodigoSetor });
+        });
+
+        modelBuilder.Entity<TseLocalVotacaoBrutoStagingRecord>(entity =>
+        {
+            entity.ToTable("tse_locais_votacao_brutos", "etl");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).UseIdentityByDefaultColumn();
+            entity.Property(x => x.UfSigla).HasMaxLength(2).IsRequired();
+            entity.Property(x => x.CodigoUnidadeEleitoral).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.NomeUnidadeEleitoral).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.MunicipioCodigoIbge).HasMaxLength(7).IsRequired();
+            entity.Property(x => x.MunicipioNome).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.NomeLocalVotacao).HasMaxLength(300).IsRequired();
+            entity.Property(x => x.EnderecoLocalVotacao).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.PayloadJson).HasColumnType("jsonb").IsRequired();
+            entity.HasIndex(x => new { x.AnoEleicao, x.UfSigla, x.MunicipioCodigoIbge, x.NumeroZona, x.NumeroLocalVotacao });
         });
     }
 }

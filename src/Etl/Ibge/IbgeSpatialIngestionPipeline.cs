@@ -1,5 +1,6 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace Etl.Ibge;
 
@@ -12,6 +13,11 @@ public sealed class IbgeSpatialIngestionPipeline(PublicDataDbContext context)
         ArgumentNullException.ThrowIfNull(geoJson);
 
         var setores = _parser.ParseSetoresCensitarios(geoJson);
+        if (setores is not { Count: > 0 })
+        {
+            Log.Warning("Carga espacial do IBGE abortada: o GeoJSON analisado nao produziu setores censitarios.");
+            throw new InvalidOperationException("GeoJSON IBGE sem setores censitarios; operacao abortada para evitar perda de dados.");
+        }
 
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
 

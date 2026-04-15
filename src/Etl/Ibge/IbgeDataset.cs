@@ -8,5 +8,8 @@ public enum IbgeDataset
     Saneamento,
     Urbanizacao,
     Infraestrutura,
-    SetoresCensitarios
+    SetoresCensitarios,
+    MalhaMunicipal,
+    CatalogoSemantico,
+    AgregadosStaging
 }

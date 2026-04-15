@@ -38,7 +38,12 @@ public static class EtlCommandParser
             throw new InvalidOperationException($"Dataset TSE não suportado: '{dataset}'.");
         }
 
-        return new EtlCommand(EtlSourceKind.Tse, dataset, filePath, dataset, year);
+        return new EtlCommand(
+            EtlSourceKind.Tse,
+            dataset,
+            filePath,
+            RequiresFileScopedDataset(ParseTseDataset(dataset)) ? BuildFileScopedDatasetName(filePath) : dataset,
+            year);
     }
 
     private static EtlCommand CreateIbgeCommand(string filePath, string dataset)
@@ -48,7 +53,11 @@ public static class EtlCommandParser
             throw new InvalidOperationException($"Dataset IBGE não suportado: '{dataset}'.");
         }
 
-        return new EtlCommand(EtlSourceKind.Ibge, dataset, filePath, dataset);
+        return new EtlCommand(
+            EtlSourceKind.Ibge,
+            dataset,
+            filePath,
+            RequiresFileScopedDataset(ParseIbgeDataset(dataset)) ? BuildFileScopedDatasetName(filePath) : dataset);
     }
 
     private static EtlCommand CreatePnadCommand(string filePath, string dataset)
@@ -108,4 +117,23 @@ public static class EtlCommandParser
         => value.Replace("-", string.Empty, StringComparison.Ordinal)
             .Replace("_", string.Empty, StringComparison.Ordinal)
             .Replace(" ", string.Empty, StringComparison.Ordinal);
+
+    private static IbgeDataset ParseIbgeDataset(string value)
+        => Enum.TryParse<IbgeDataset>(NormalizeEnumToken(value), true, out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Dataset IBGE não suportado: '{value}'.");
+
+    private static TseIngestionSource ParseTseDataset(string value)
+        => Enum.TryParse<TseIngestionSource>(NormalizeEnumToken(value), true, out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Dataset TSE não suportado: '{value}'.");
+
+    private static bool RequiresFileScopedDataset(IbgeDataset dataset)
+        => dataset is IbgeDataset.AgregadosStaging or IbgeDataset.CatalogoSemantico;
+
+    private static bool RequiresFileScopedDataset(TseIngestionSource dataset)
+        => dataset is TseIngestionSource.LocaisBrutos;
+
+    private static string BuildFileScopedDatasetName(string filePath)
+        => Path.GetFileNameWithoutExtension(filePath).ToLowerInvariant();
 }

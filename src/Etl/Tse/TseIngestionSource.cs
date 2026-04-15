@@ -6,5 +6,6 @@ public enum TseIngestionSource
     Eleitorado,
     Bens,
     PrestacaoContas,
-    Coligacoes
+    Coligacoes,
+    LocaisBrutos
 }

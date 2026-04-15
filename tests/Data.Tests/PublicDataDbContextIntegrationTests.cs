@@ -47,7 +47,7 @@ public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
             """
             select schema_name
             from information_schema.schemata
-            where schema_name in ('ibge', 'tse', 'pnad')
+            where schema_name in ('ibge', 'tse', 'pnad', 'etl')
             """,
             connection);
 
@@ -57,10 +57,11 @@ public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
             existingSchemas.Add(reader.GetString(0));
         }
 
-        Assert.Equal(3, existingSchemas.Count);
+        Assert.Equal(4, existingSchemas.Count);
         Assert.Contains("ibge", existingSchemas);
         Assert.Contains("tse", existingSchemas);
         Assert.Contains("pnad", existingSchemas);
+        Assert.Contains("etl", existingSchemas);
     }
 
     [Fact]
@@ -82,8 +83,34 @@ public sealed class PublicDataDbContextIntegrationTests : IAsyncLifetime
         context.SetoresCensitarios.Add(new SetorCensitarioRecord
         {
             CodigoSetor = "355030800000001",
-            MunicipioCodigoIbge = 3550308,
+            Situacao = string.Empty,
+            CodigoSituacao = string.Empty,
+            CodigoTipo = string.Empty,
+            AreaKm2 = 0d,
+            CodigoRegiao = string.Empty,
+            NomeRegiao = string.Empty,
+            CodigoUf = string.Empty,
+            NomeUf = string.Empty,
+            MunicipioCodigoIbge = "3550308",
             MunicipioNome = "Sao Paulo",
+            CodigoDistrito = string.Empty,
+            NomeDistrito = string.Empty,
+            CodigoSubdistrito = string.Empty,
+            NomeSubdistrito = string.Empty,
+            CodigoBairro = string.Empty,
+            NomeBairro = string.Empty,
+            CodigoNucleoUrbano = string.Empty,
+            NomeNucleoUrbano = string.Empty,
+            CodigoFcu = string.Empty,
+            NomeFcu = string.Empty,
+            CodigoAglomerado = string.Empty,
+            NomeAglomerado = string.Empty,
+            CodigoRegiaoIntermediaria = string.Empty,
+            NomeRegiaoIntermediaria = string.Empty,
+            CodigoRegiaoImediata = string.Empty,
+            NomeRegiaoImediata = string.Empty,
+            CodigoConcentracaoUrbana = string.Empty,
+            NomeConcentracaoUrbana = string.Empty,
             UfSigla = "SP",
             Geometria = geometryFactory.CreateMultiPolygon([polygon])
         });

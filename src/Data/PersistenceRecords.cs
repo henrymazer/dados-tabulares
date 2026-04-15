@@ -187,13 +187,140 @@ public sealed class DadoInfraestruturaRecord
     public int DomiciliosAtendidos { get; set; }
 }
 
+public sealed class CargaBrutaSnapshotRecord
+{
+    public long Id { get; set; }
+    public string Fonte { get; set; } = string.Empty;
+    public string Dataset { get; set; } = string.Empty;
+    public string Escopo { get; set; } = string.Empty;
+    public string ChaveSnapshot { get; set; } = string.Empty;
+    public string HashSnapshot { get; set; } = string.Empty;
+    public string NomeArquivoOriginal { get; set; } = string.Empty;
+    public string CaminhoArquivoOriginal { get; set; } = string.Empty;
+    public long TamanhoBytes { get; set; }
+    public int RegistrosImportados { get; set; }
+    public bool IsCurrent { get; set; }
+    public DateTimeOffset RegistradoEmUtc { get; set; }
+    public DateTimeOffset? SubstituidoEmUtc { get; set; }
+}
+
+public sealed class CargaBrutaAuditoriaRecord
+{
+    public long Id { get; set; }
+    public long SnapshotId { get; set; }
+    public string Fonte { get; set; } = string.Empty;
+    public string Dataset { get; set; } = string.Empty;
+    public string Escopo { get; set; } = string.Empty;
+    public string ChaveSnapshot { get; set; } = string.Empty;
+    public string HashSnapshot { get; set; } = string.Empty;
+    public string NomeArquivoOriginal { get; set; } = string.Empty;
+    public string CaminhoArquivoOriginal { get; set; } = string.Empty;
+    public long TamanhoBytes { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public int RegistrosImportados { get; set; }
+    public DateTimeOffset RegistradoEmUtc { get; set; }
+}
+
 public sealed class SetorCensitarioRecord
 {
     public string CodigoSetor { get; set; } = string.Empty;
-    public int MunicipioCodigoIbge { get; set; }
+    public string Situacao { get; set; } = string.Empty;
+    public string CodigoSituacao { get; set; } = string.Empty;
+    public string CodigoTipo { get; set; } = string.Empty;
+    public double AreaKm2 { get; set; }
+    public string CodigoRegiao { get; set; } = string.Empty;
+    public string NomeRegiao { get; set; } = string.Empty;
+    public string CodigoUf { get; set; } = string.Empty;
+    public string NomeUf { get; set; } = string.Empty;
+    public string MunicipioCodigoIbge { get; set; } = string.Empty;
     public string MunicipioNome { get; set; } = string.Empty;
+    public string CodigoDistrito { get; set; } = string.Empty;
+    public string NomeDistrito { get; set; } = string.Empty;
+    public string CodigoSubdistrito { get; set; } = string.Empty;
+    public string NomeSubdistrito { get; set; } = string.Empty;
+    public string CodigoBairro { get; set; } = string.Empty;
+    public string NomeBairro { get; set; } = string.Empty;
+    public string CodigoNucleoUrbano { get; set; } = string.Empty;
+    public string NomeNucleoUrbano { get; set; } = string.Empty;
+    public string CodigoFcu { get; set; } = string.Empty;
+    public string NomeFcu { get; set; } = string.Empty;
+    public string CodigoAglomerado { get; set; } = string.Empty;
+    public string NomeAglomerado { get; set; } = string.Empty;
+    public string CodigoRegiaoIntermediaria { get; set; } = string.Empty;
+    public string NomeRegiaoIntermediaria { get; set; } = string.Empty;
+    public string CodigoRegiaoImediata { get; set; } = string.Empty;
+    public string NomeRegiaoImediata { get; set; } = string.Empty;
+    public string CodigoConcentracaoUrbana { get; set; } = string.Empty;
+    public string NomeConcentracaoUrbana { get; set; } = string.Empty;
     public string UfSigla { get; set; } = string.Empty;
     public MultiPolygon Geometria { get; set; } = default!;
+}
+
+public sealed class MunicipioMalhaRecord
+{
+    public string CodigoMunicipio { get; set; } = string.Empty;
+    public string NomeMunicipio { get; set; } = string.Empty;
+    public string CodigoRegiaoImediata { get; set; } = string.Empty;
+    public string NomeRegiaoImediata { get; set; } = string.Empty;
+    public string CodigoRegiaoIntermediaria { get; set; } = string.Empty;
+    public string NomeRegiaoIntermediaria { get; set; } = string.Empty;
+    public string CodigoUf { get; set; } = string.Empty;
+    public string NomeUf { get; set; } = string.Empty;
+    public string UfSigla { get; set; } = string.Empty;
+    public string CodigoRegiao { get; set; } = string.Empty;
+    public string NomeRegiao { get; set; } = string.Empty;
+    public string SiglaRegiao { get; set; } = string.Empty;
+    public string CodigoConcentracaoUrbana { get; set; } = string.Empty;
+    public string NomeConcentracaoUrbana { get; set; } = string.Empty;
+    public double AreaKm2 { get; set; }
+    public MultiPolygon Geometria { get; set; } = default!;
+}
+
+public sealed class IbgeCatalogoVariavelRecord
+{
+    public long Id { get; set; }
+    public string FonteDicionario { get; set; } = string.Empty;
+    public string Pacote { get; set; } = string.Empty;
+    public string Tipo { get; set; } = string.Empty;
+    public string Tema { get; set; } = string.Empty;
+    public string Variavel { get; set; } = string.Empty;
+    public string Descricao { get; set; } = string.Empty;
+}
+
+public sealed class IbgeCatalogoCategoriaRecord
+{
+    public long Id { get; set; }
+    public string FonteDicionario { get; set; } = string.Empty;
+    public string Pacote { get; set; } = string.Empty;
+    public string Variavel { get; set; } = string.Empty;
+    public string Categoria { get; set; } = string.Empty;
+    public string Descricao { get; set; } = string.Empty;
+}
+
+public sealed class IbgeAgregadoStagingRecord
+{
+    public long Id { get; set; }
+    public string Pacote { get; set; } = string.Empty;
+    public string NomeArquivoInterno { get; set; } = string.Empty;
+    public string CodigoSetor { get; set; } = string.Empty;
+    public string PayloadJson { get; set; } = "{}";
+}
+
+public sealed class TseLocalVotacaoBrutoStagingRecord
+{
+    public long Id { get; set; }
+    public int AnoEleicao { get; set; }
+    public string UfSigla { get; set; } = string.Empty;
+    public string CodigoUnidadeEleitoral { get; set; } = string.Empty;
+    public string NomeUnidadeEleitoral { get; set; } = string.Empty;
+    public string MunicipioCodigoIbge { get; set; } = string.Empty;
+    public string MunicipioNome { get; set; } = string.Empty;
+    public int NumeroZona { get; set; }
+    public int NumeroSecao { get; set; }
+    public int NumeroLocalVotacao { get; set; }
+    public string NomeLocalVotacao { get; set; } = string.Empty;
+    public string EnderecoLocalVotacao { get; set; } = string.Empty;
+    public string PayloadJson { get; set; } = "{}";
 }
 
 public sealed class TrimestreRecord

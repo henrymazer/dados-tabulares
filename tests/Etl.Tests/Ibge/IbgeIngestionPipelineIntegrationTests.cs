@@ -137,6 +137,55 @@ public sealed class IbgeIngestionPipelineIntegrationTests : IAsyncLifetime
         Assert.Equal("MultiPolygon", setor.Geometria.GeometryType);
     }
 
+    [Fact]
+    public async Task IngerirSetoresCensitariosAsync_ComGeoJsonSemFeatures_NaoApagaCargaExistente()
+    {
+        await using var context = CreateContext();
+        await context.Database.MigrateAsync();
+
+        var pipeline = new IbgeSpatialIngestionPipeline(context);
+
+        await pipeline.IngerirSetoresCensitariosAsync(ToStream("""
+            {
+              "type": "FeatureCollection",
+              "features": [
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "cd_setor": "355030800000001",
+                    "cd_mun": 3550308,
+                    "nm_mun": "Sao Paulo",
+                    "uf": "SP"
+                  },
+                  "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                      [-46.65, -23.55],
+                      [-46.64, -23.55],
+                      [-46.64, -23.54],
+                      [-46.65, -23.54],
+                      [-46.65, -23.55]
+                    ]]
+                  }
+                }
+              ]
+            }
+            """));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => pipeline.IngerirSetoresCensitariosAsync(ToStream("""
+            {
+              "type": "FeatureCollection",
+              "features": []
+            }
+            """)));
+
+        Assert.Contains("evitar perda de dados", ex.Message);
+        Assert.Equal(1, await context.SetoresCensitarios.CountAsync());
+
+        var setor = await context.SetoresCensitarios.SingleAsync();
+        Assert.Equal("355030800000001", setor.CodigoSetor);
+    }
+
     private PublicDataDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PublicDataDbContext>()

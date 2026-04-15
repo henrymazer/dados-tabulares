@@ -67,6 +67,12 @@ Desktop.ini
 data/raw/
 data/temp/
 
+# Nominatim local dev stack
+infra/nominatim/.env
+infra/nominatim/data/
+infra/nominatim/project/
+infra/nominatim/*.log
+
 # GCS service account keys
 *-credentials.json
 service-account*.json

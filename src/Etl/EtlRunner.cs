@@ -12,31 +12,73 @@ public sealed class EtlRunner(PublicDataDbContext context)
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        return command.Kind switch
+        var snapshotService = new CargaBrutaSnapshotService(context);
+        var snapshot = await snapshotService.PrepararAsync(command, ct);
+        if (!snapshot.DeveIngerir)
+            return 0;
+
+        var imported = command.Kind switch
         {
             EtlSourceKind.Tse => await RunTseAsync(command, ct),
             EtlSourceKind.Ibge => await RunIbgeAsync(command, ct),
             EtlSourceKind.Pnad => await RunPnadAsync(command, ct),
             _ => throw new ArgumentOutOfRangeException(nameof(command), command.Kind, "Fonte ETL não suportada.")
         };
+
+        await snapshotService.RegistrarCargaAplicadaAsync(snapshot, imported, ct);
+        return imported;
     }
 
     private async Task<int> RunTseAsync(EtlCommand command, CancellationToken ct)
     {
+        var source = ParseTseSource(command.Source);
+        if (source == TseIngestionSource.LocaisBrutos)
+        {
+            var pipeline = new TseLocalVotacaoBrutoStagingPipeline(context);
+            return await pipeline.IngerirAsync(command.FilePath, command.Year ?? throw new InvalidOperationException("Ano TSE ausente."), ct);
+        }
+
         using var reader = File.OpenText(command.FilePath);
         var service = new TseIngestionService(new TseCsvParser(), new TseIngestionLoader(context));
-        var source = ParseTseSource(command.Source);
 
         return await service.IngerirAsync(source, reader, new AnoEleicao(command.Year ?? throw new InvalidOperationException("Ano TSE ausente.")), ct);
     }
 
     private async Task<int> RunIbgeAsync(EtlCommand command, CancellationToken ct)
     {
-        await using var stream = File.OpenRead(command.FilePath);
         var dataset = ParseIbgeDataset(command.Source);
 
+        if (dataset == IbgeDataset.MalhaMunicipal)
+        {
+            var malhaMunicipalPipeline = new IbgeMalhaMunicipalIngestionPipeline(context);
+            return await malhaMunicipalPipeline.IngerirAsync(command.FilePath, ct);
+        }
+
+        if (dataset == IbgeDataset.CatalogoSemantico)
+        {
+            var parser = new IbgeSemanticCatalogParser();
+            var catalog = Directory.Exists(command.FilePath)
+                ? parser.ParseDirectory(command.FilePath)
+                : ParseCatalogFromFile(parser, command.FilePath);
+            var service = new IbgeSemanticCatalogPersistenceService(context);
+            return await service.PersistAsync(catalog, ct);
+        }
+
+        if (dataset == IbgeDataset.AgregadosStaging)
+        {
+            var aggregateStagingPipeline = new IbgeAggregateStagingPipeline(context);
+            return await aggregateStagingPipeline.IngerirAsync(command.FilePath, ct);
+        }
+
+        await using var stream = File.OpenRead(command.FilePath);
         if (dataset == IbgeDataset.SetoresCensitarios)
         {
+            if (Path.GetExtension(command.FilePath).Equals(".gpkg", StringComparison.OrdinalIgnoreCase))
+            {
+                var realPipeline = new IbgeGeoPackageSetorIngestionPipeline(context);
+                return await realPipeline.IngerirAsync(command.FilePath, ct);
+            }
+
             var spatialPipeline = new IbgeSpatialIngestionPipeline(context);
             return await spatialPipeline.IngerirSetoresCensitariosAsync(stream, ct);
         }
@@ -72,4 +114,10 @@ public sealed class EtlRunner(PublicDataDbContext context)
         => value.Replace("-", string.Empty, StringComparison.Ordinal)
             .Replace("_", string.Empty, StringComparison.Ordinal)
             .Replace(" ", string.Empty, StringComparison.Ordinal);
+
+    private static IbgeSemanticCatalog ParseCatalogFromFile(IbgeSemanticCatalogParser parser, string filePath)
+    {
+        using var stream = File.OpenRead(filePath);
+        return parser.ParseDictionary(stream, filePath);
+    }
 }

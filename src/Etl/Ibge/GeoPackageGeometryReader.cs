@@ -29,6 +29,11 @@ internal static class GeoPackageGeometryReader
 
         var srid = ReadInt32(blob, 4, littleEndian);
         var wkbOffset = 8 + envelopeBytes;
+        if (blob.Length <= wkbOffset)
+        {
+            throw new InvalidOperationException("Blob GeoPackage inválido: WKB ausente.");
+        }
+
         var geometry = new WKBReader().Read(blob[wkbOffset..]);
         geometry.SRID = srid;
 

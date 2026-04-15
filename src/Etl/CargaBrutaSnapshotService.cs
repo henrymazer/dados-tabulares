@@ -43,6 +43,8 @@ public sealed class CargaBrutaSnapshotService(PublicDataDbContext context)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
         var agora = DateTimeOffset.UtcNow;
         var snapshotsAtuais = await context.CargasBrutasSnapshots
             .Where(x => x.Fonte == snapshot.Fonte &&
@@ -92,6 +94,7 @@ public sealed class CargaBrutaSnapshotService(PublicDataDbContext context)
         }, ct);
 
         await context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
     }
 
     private static string ComputeSha256(string filePath)
@@ -125,9 +128,15 @@ public sealed class CargaBrutaSnapshotService(PublicDataDbContext context)
                 var fileNameBytes = Encoding.UTF8.GetBytes(Path.GetFileName(file));
                 sha256.TransformBlock(fileNameBytes, 0, fileNameBytes.Length, null, 0);
 
-                var fileBytes = File.ReadAllBytes(file);
-                totalBytes += fileBytes.LongLength;
-                sha256.TransformBlock(fileBytes, 0, fileBytes.Length, null, 0);
+                using var fileStream = File.OpenRead(file);
+                totalBytes += fileStream.Length;
+
+                var buffer = new byte[81920];
+                int bytesRead;
+                while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    sha256.TransformBlock(buffer, 0, bytesRead, null, 0);
+                }
             }
 
             sha256.TransformFinalBlock([], 0, 0);

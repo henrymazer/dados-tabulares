@@ -25,6 +25,8 @@ public sealed class IbgeSemanticCatalogPersistenceService(PublicDataDbContext co
 
         var categorias = catalog.Entries
             .Where(entry => !string.IsNullOrWhiteSpace(entry.Categoria))
+            .GroupBy(entry => new { entry.Pacote, entry.Variavel, entry.Categoria })
+            .Select(group => group.First())
             .Select(entry => new IbgeCatalogoCategoriaRecord
             {
                 FonteDicionario = entry.FonteDicionario,

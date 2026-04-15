@@ -8,6 +8,8 @@ public sealed class IbgeGeoPackageReader
 {
     public IReadOnlyList<MunicipioMalhaRecord> ReadMunicipios(string filePath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         using var connection = Open(filePath);
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -16,6 +18,7 @@ public sealed class IbgeGeoPackageReader
             """;
 
         using var reader = command.ExecuteReader();
+        var geomOrdinal = reader.GetOrdinal("geom");
         var items = new List<MunicipioMalhaRecord>();
         while (reader.Read())
         {
@@ -36,7 +39,7 @@ public sealed class IbgeGeoPackageReader
                 CodigoConcentracaoUrbana = GetString(reader, 13),
                 NomeConcentracaoUrbana = GetString(reader, 14),
                 AreaKm2 = GetDouble(reader, 15),
-                Geometria = GeoPackageGeometryReader.ReadMultiPolygon((byte[])reader["geom"])
+                Geometria = ReadRequiredGeometry(reader, geomOrdinal)
             });
         }
 
@@ -45,6 +48,8 @@ public sealed class IbgeGeoPackageReader
 
     public IEnumerable<SetorCensitarioRecord> StreamSetores(string filePath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         using var connection = Open(filePath);
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -56,10 +61,11 @@ public sealed class IbgeGeoPackageReader
             """;
 
         using var reader = command.ExecuteReader();
+        var geomOrdinal = reader.GetOrdinal("geom");
         SetorCensitarioRecord? current = null;
         while (reader.Read())
         {
-            var setor = CreateSetor(reader);
+            var setor = CreateSetor(reader, geomOrdinal);
             if (current is null)
             {
                 current = setor;
@@ -85,9 +91,9 @@ public sealed class IbgeGeoPackageReader
     public IReadOnlyList<SetorCensitarioRecord> ReadSetores(string filePath)
         => StreamSetores(filePath).ToList();
 
-    private static SetorCensitarioRecord CreateSetor(SqliteDataReader reader)
+    private static SetorCensitarioRecord CreateSetor(SqliteDataReader reader, int geomOrdinal)
     {
-        var geometria = GeoPackageGeometryReader.ReadMultiPolygon((byte[])reader["geom"]);
+        var geometria = ReadRequiredGeometry(reader, geomOrdinal);
         return new SetorCensitarioRecord
         {
             CodigoSetor = reader.GetString(1),
@@ -126,6 +132,8 @@ public sealed class IbgeGeoPackageReader
 
     private static SqliteConnection Open(string filePath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException("GeoPackage não encontrado.", filePath);
@@ -145,6 +153,16 @@ public sealed class IbgeGeoPackageReader
 
     private static double GetDouble(SqliteDataReader reader, int ordinal)
         => reader.IsDBNull(ordinal) ? 0d : reader.GetDouble(ordinal);
+
+    private static MultiPolygon ReadRequiredGeometry(SqliteDataReader reader, int ordinal)
+    {
+        if (reader.IsDBNull(ordinal))
+        {
+            throw new InvalidOperationException("Coluna geom obrigatória está ausente no GeoPackage.");
+        }
+
+        return GeoPackageGeometryReader.ReadMultiPolygon((byte[])reader.GetValue(ordinal));
+    }
 
     private static string GetUfSigla(string codigoUf)
         => codigoUf switch

@@ -18,6 +18,7 @@ public sealed class IbgeSemanticCatalog
 
     public IbgeSemanticCatalog(IEnumerable<IbgeSemanticCatalogEntry> entries)
     {
+        ArgumentNullException.ThrowIfNull(entries);
         Entries = entries.ToArray();
     }
 
@@ -49,7 +50,8 @@ public sealed class IbgeSemanticCatalog
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        using var parser = new TextFieldParser(input)
+        using var reader = new StreamReader(input, leaveOpen: true);
+        using var parser = new TextFieldParser(reader)
         {
             TextFieldType = FieldType.Delimited,
             HasFieldsEnclosedInQuotes = true,

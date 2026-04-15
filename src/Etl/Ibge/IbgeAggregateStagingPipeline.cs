@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,16 +16,19 @@ public sealed class IbgeAggregateStagingPipeline(PublicDataDbContext context)
         var csvEntry = archive.Entries.Single(entry => entry.FullName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase));
 
         using var entryStream = csvEntry.Open();
-        using var parser = new TextFieldParser(entryStream)
+        using var reader = new StreamReader(entryStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+        var headerLine = reader.ReadLine() ?? throw new InvalidOperationException("Pacote agregado IBGE sem cabeçalho.");
+        var delimiter = DetectDelimiter(headerLine);
+        var headers = ParseHeaderLine(headerLine, delimiter);
+
+        using var parser = new TextFieldParser(reader)
         {
             TextFieldType = FieldType.Delimited,
             HasFieldsEnclosedInQuotes = true,
             TrimWhiteSpace = true
         };
 
-        parser.SetDelimiters(";", ",");
-
-        var headers = parser.ReadFields() ?? throw new InvalidOperationException("Pacote agregado IBGE sem cabeçalho.");
+        parser.SetDelimiters(delimiter.ToString());
         var rows = new List<IbgeAgregadoStagingRecord>();
 
         while (!parser.EndOfData)
@@ -65,4 +69,13 @@ public sealed class IbgeAggregateStagingPipeline(PublicDataDbContext context)
 
         return rows.Count;
     }
+
+    private static char DetectDelimiter(string headerLine)
+        => headerLine.Count(c => c == ';') >= headerLine.Count(c => c == ',') ? ';' : ',';
+
+    private static string[] ParseHeaderLine(string headerLine, char delimiter)
+        => headerLine
+            .Split(delimiter)
+            .Select(column => column.Trim().Trim('"'))
+            .ToArray();
 }

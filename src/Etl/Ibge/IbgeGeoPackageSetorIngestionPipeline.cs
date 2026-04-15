@@ -10,6 +10,8 @@ public sealed class IbgeGeoPackageSetorIngestionPipeline(PublicDataDbContext con
 
     public async Task<int> IngerirAsync(string filePath, CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
         await context.SetoresCensitarios.ExecuteDeleteAsync(ct);
         context.ChangeTracker.Clear();

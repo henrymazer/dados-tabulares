@@ -70,7 +70,6 @@ public sealed class EtlRunner(PublicDataDbContext context)
             return await aggregateStagingPipeline.IngerirAsync(command.FilePath, ct);
         }
 
-        await using var stream = File.OpenRead(command.FilePath);
         if (dataset == IbgeDataset.SetoresCensitarios)
         {
             if (Path.GetExtension(command.FilePath).Equals(".gpkg", StringComparison.OrdinalIgnoreCase))
@@ -79,12 +78,14 @@ public sealed class EtlRunner(PublicDataDbContext context)
                 return await realPipeline.IngerirAsync(command.FilePath, ct);
             }
 
+            await using var sectorStream = File.OpenRead(command.FilePath);
             var spatialPipeline = new IbgeSpatialIngestionPipeline(context);
-            return await spatialPipeline.IngerirSetoresCensitariosAsync(stream, ct);
+            return await spatialPipeline.IngerirSetoresCensitariosAsync(sectorStream, ct);
         }
 
+        await using var ingestionStream = File.OpenRead(command.FilePath);
         var pipeline = new IbgeIngestionPipeline(context);
-        return await pipeline.IngerirAsync(dataset, stream, ct);
+        return await pipeline.IngerirAsync(dataset, ingestionStream, ct);
     }
 
     private async Task<int> RunPnadAsync(EtlCommand command, CancellationToken ct)
